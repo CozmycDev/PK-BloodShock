@@ -2,6 +2,8 @@
 
 This is an addon ability for the [ProjectKorra](https://projectkorra.com/) plugin for Spigot Minecraft servers. Ability concept by [LuxaelNi](https://github.com/LuxaelNivra).
 
+https://github.com/user-attachments/assets/61d66c5a-4324-4167-ae60-84b2ab41bb0b
+
 ## Description
 
 **BloodShock** is a Blood ability that allows waterbenders to bend the blood of every entity around them at once. This overpowered ability lets you control their movements, and/or you can toss them all away from you.
