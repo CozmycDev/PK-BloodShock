@@ -7,12 +7,14 @@ import com.projectkorra.projectkorra.ability.Ability;
 import com.projectkorra.projectkorra.ability.AddonAbility;
 import com.projectkorra.projectkorra.ability.BloodAbility;
 import com.projectkorra.projectkorra.ability.ElementalAbility;
+import com.projectkorra.projectkorra.command.Commands;
 import com.projectkorra.projectkorra.configuration.ConfigManager;
 import com.projectkorra.projectkorra.region.RegionProtection;
 import com.projectkorra.projectkorra.util.DamageHandler;
 import com.projectkorra.projectkorra.waterbending.blood.Bloodbending;
 
 import org.bukkit.Bukkit;
+import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
@@ -36,7 +38,6 @@ public class BloodShock extends BloodAbility implements AddonAbility {
     private double range;
     private double throwPower;
     private double throwHeight;
-    private boolean useGlobalConfig;
 
     private AbilityState currentState;
     private boolean expired;
@@ -60,7 +61,6 @@ public class BloodShock extends BloodAbility implements AddonAbility {
         this.range = ConfigManager.defaultConfig.get().getDouble("ExtraAbilities.Cozmyc.BloodShock.Range");
         this.throwPower = ConfigManager.defaultConfig.get().getDouble("ExtraAbilities.Cozmyc.BloodShock.ThrowPower");
         this.throwHeight = ConfigManager.defaultConfig.get().getDouble("ExtraAbilities.Cozmyc.BloodShock.ThrowHeight");
-        this.useGlobalConfig = ConfigManager.defaultConfig.get().getBoolean("ExtraAbilities.Cozmyc.BloodShock.UseBloodbendingAbilityConfig");
 
         this.currentState = AbilityState.START;
         this.expired = false;
@@ -82,12 +82,12 @@ public class BloodShock extends BloodAbility implements AddonAbility {
 
     @Override
     public String getInstructions() {
-        return "Hold Shift to activate, Left Click to lift entities, release Shift to launch.";
+        return ConfigManager.defaultConfig.get().getString("ExtraAbilities.Cozmyc.BloodShock.Language.Instructions");
     }
 
     @Override
     public String getDescription() {
-        return "Extremely skilled bloodbenders have demonstrated the ability of taking full control of any living being in their surrounding area. This ability grants the user mass crowd control, allowing them to forcefully make entities mimic the bender's movements until they are lifted into the air and launched away upon release.";
+        return ConfigManager.defaultConfig.get().getString("ExtraAbilities.Cozmyc.BloodShock.Language.Description");
     }
 
     @Override
@@ -101,7 +101,15 @@ public class BloodShock extends BloodAbility implements AddonAbility {
         ConfigManager.defaultConfig.get().addDefault("ExtraAbilities.Cozmyc.BloodShock.ThrowPower", 2.0);
         ConfigManager.defaultConfig.get().addDefault("ExtraAbilities.Cozmyc.BloodShock.ThrowHeight", 0.7);
         ConfigManager.defaultConfig.get().addDefault("ExtraAbilities.Cozmyc.BloodShock.Range", 10);
-        ConfigManager.defaultConfig.get().addDefault("ExtraAbilities.Cozmyc.BloodShock.UseBloodbendingAbilityConfig", true);
+
+        ConfigManager.defaultConfig.get().addDefault("ExtraAbilities.Cozmyc.BloodShock.NightOnly", true);
+        ConfigManager.defaultConfig.get().addDefault("ExtraAbilities.Cozmyc.BloodShock.FullMoonOnly", false);
+        ConfigManager.defaultConfig.get().addDefault("ExtraAbilities.Cozmyc.BloodShock.UndeadMobs", true);
+        ConfigManager.defaultConfig.get().addDefault("ExtraAbilities.Cozmyc.BloodShock.OtherBloodbenders", false);
+        ConfigManager.defaultConfig.get().addDefault("ExtraAbilities.Cozmyc.BloodShock.Bloodless", false);
+
+        ConfigManager.defaultConfig.get().addDefault("ExtraAbilities.Cozmyc.BloodShock.Language.Description", "Extremely skilled bloodbenders have demonstrated the ability of taking full control of any living being in their surrounding area. This ability grants the user mass crowd control, allowing them to forcefully make entities mimic the bender's movements until they are lifted into the air and launched away upon release.");
+        ConfigManager.defaultConfig.get().addDefault("ExtraAbilities.Cozmyc.BloodShock.Language.Instructions", "Hold Shift to activate, Left Click to lift entities, release Shift to launch.");
 
         ConfigManager.defaultConfig.save();
     }
@@ -117,7 +125,7 @@ public class BloodShock extends BloodAbility implements AddonAbility {
 
     @Override
     public String getVersion() {
-        return "1.0.5";
+        return "1.0.6";
     }
 
     @Override
@@ -234,37 +242,41 @@ public class BloodShock extends BloodAbility implements AddonAbility {
         List<Entity> entities = GeneralMethods.getEntitiesAroundPoint(this.player.getLocation(), this.range);
 
         boolean canBendUndead = ConfigManager.defaultConfig.get()
-                .getBoolean("Abilities.Water.Bloodbending.CanBeUsedOnUndeadMobs")
-                && this.useGlobalConfig;
+                .getBoolean("ExtraAbilities.Cozmyc.BloodShock.UndeadMobs");
 
         boolean canBendOtherBloodbenders = ConfigManager.defaultConfig.get()
-                .getBoolean("Abilities.Water.Bloodbending.CanBloodbendOtherBloodbenders")
-                && this.useGlobalConfig;
+                .getBoolean("ExtraAbilities.Cozmyc.BloodShock.OtherBloodbenders");
+
+        boolean canBendBloodless = ConfigManager.defaultConfig.get()
+                .getBoolean("ExtraAbilities.Cozmyc.BloodShock.Bloodless");
 
         for (Entity entity : entities) {
             if (entity == null) continue;
             if (entity.isDead()) continue;
             if (!(entity instanceof LivingEntity)) continue;
-            if (entity.getUniqueId() == this.player.getUniqueId()) continue;
-            if (isBloodless(entity)) continue;
-            if (!canBendUndead && GeneralMethods.isUndead(entity)) continue;
-            if (isInProtectedRegion(this.player, entity)) continue;
 
             UUID uuid = entity.getUniqueId();
 
-            if (!bloodBent.containsKey(uuid)) {
-                if (entity instanceof Player) {
-                    BendingPlayer targetPlayer = BendingPlayer.getBendingPlayer((Player) entity);
+            if (bloodBent.containsKey(uuid)) continue;
+            if (uuid.equals(this.player.getUniqueId())) continue;
+            if (!canBendBloodless && isBloodless(entity)) continue;
+            if (!canBendUndead && GeneralMethods.isUndead(entity)) continue;
+            if (isInProtectedRegion(this.player, entity)) continue;
 
-                    if (targetPlayer.canBloodbend() && !canBendOtherBloodbenders) continue;
-                    if (!targetPlayer.canBeBloodbent()) continue;
-                }
+            double distance = entity.getLocation().distance(this.player.getLocation());
+            if (distance > this.range - 0.5) continue;
 
-                double distance = entity.getLocation().distance(this.player.getLocation());
-                if (distance > this.range - 0.5) continue;
+            if (entity instanceof Player) {
+                Player targetPlayer = (Player) entity;
+                BendingPlayer targetBendingPlayer = BendingPlayer.getBendingPlayer(targetPlayer);
 
-                bloodbendEntity((LivingEntity) entity);
+                if (Commands.invincible.contains(targetPlayer.getName())) continue;
+                if (targetPlayer.getGameMode() == GameMode.SPECTATOR || targetPlayer.getGameMode() == GameMode.CREATIVE) continue;
+                if (targetBendingPlayer.canBloodbend() && !canBendOtherBloodbenders) continue;
+                if (!targetBendingPlayer.canBeBloodbent()) continue;
             }
+
+            bloodbendEntity((LivingEntity) entity);
         }
 
         removeOutOfRangeEntities();

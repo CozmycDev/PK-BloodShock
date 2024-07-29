@@ -38,11 +38,23 @@ The ability can be configured in the ProjectKorra `config.yml` file under `Extra
 ExtraAbilities:
   Cozmyc:
     BloodShock:
-      ControlMovements: true  # whether you can control entities movements while holding shift and before clicking
-      Cooldown: 5000  # milliseconds
+      ControlMovements: true
+      Cooldown: 5000
       Duration: 6000
       LiftHeight: 2.5
-      LaunchPower: 2.0
-      LaunchHeight: 0.7
+      ThrowPower: 2.0
+      ThrowHeight: 0.7
       Range: 10
-      UseBloodbendingAbilityConfig: true
+      Language:
+        Description: Extremely skilled bloodbenders have demonstrated the ability
+          of taking full control of any living being in their surrounding area. This
+          ability grants the user mass crowd control, allowing them to forcefully
+          make entities mimic the bender's movements until they are lifted into the
+          air and launched away upon release.
+        Instructions: Hold Shift to activate, Left Click to lift entities, release
+          Shift to launch.
+      NightOnly: true
+      FullMoonOnly: false
+      UndeadMobs: true
+      OtherBloodbenders: false
+      Bloodless: false

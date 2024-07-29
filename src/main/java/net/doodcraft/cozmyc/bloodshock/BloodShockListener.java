@@ -56,7 +56,8 @@ public class BloodShockListener implements Listener {
     @EventHandler
     public void onPlayerToggleSneak(PlayerToggleSneakEvent event) {
         Player player = event.getPlayer();
-        if (noPermission(player)) return;
+        if (!hasPermission(player)) return;
+
         if (event.isSneaking()) {
             new BloodShock(player);
         } else {
@@ -72,17 +73,32 @@ public class BloodShockListener implements Listener {
         }
     }
 
-    private boolean noPermission(Player player) {
+    private boolean hasPermission(Player player) {
         BendingPlayer bPlayer = BendingPlayer.getBendingPlayer(player);
-        if (!bPlayer.getBoundAbilityName().equalsIgnoreCase("BloodShock")) return true;
-        boolean useGlobalConfig = ConfigManager.defaultConfig.get().getBoolean("ExtraAbilities.Cozmyc.BloodShock.UseBloodbendingAbilityConfig");
-        boolean onlyAtNight = ConfigManager.defaultConfig.get().getBoolean("Abilities.Water.Bloodbending.CanOnlyBeUsedAtNight") && useGlobalConfig;
-        boolean onlyDuringFullMoon = ConfigManager.defaultConfig.get().getBoolean("Abilities.Water.Bloodbending.CanOnlyBeUsedDuringFullMoon") && useGlobalConfig;
+
+        if (!bPlayer.getBoundAbilityName().equalsIgnoreCase("BloodShock")) {
+            return false;
+        }
+
+        if (player.isOp()) {
+            return true;
+        }
+
+        boolean onlyAtNight = ConfigManager.defaultConfig.get().getBoolean("ExtraAbilities.Cozmyc.BloodShock.NightOnly");
+        boolean onlyDuringFullMoon = ConfigManager.defaultConfig.get().getBoolean("ExtraAbilities.Cozmyc.BloodShock.FullMoonOnly");
+
         boolean isFullMoon = ElementalAbility.isFullMoon(player.getWorld());
         boolean isDay = ElementalAbility.isDay(player.getWorld());
-        if (!isFullMoon && onlyDuringFullMoon) return true;
-        if (isDay && onlyAtNight) return true;
-        return BloodShock.isInProtectedRegion(player, player);
+
+        if (onlyDuringFullMoon && !isFullMoon) {
+            return false;
+        }
+
+        if (onlyAtNight && isDay) {
+            return false;
+        }
+
+        return !BloodShock.isInProtectedRegion(player, player);
     }
 
     @EventHandler
