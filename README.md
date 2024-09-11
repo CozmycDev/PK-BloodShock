@@ -1,3 +1,7 @@
+[![GitHub Pre-Release](https://img.shields.io/github/release-pre/CozmycDev/PK-BloodShock.svg)](https://github.com/CozmycDev/PK-BloodShock/releases)
+[![Github All Releases](https://img.shields.io/github/downloads/CozmycDev/PK-BloodShock/total.svg)](https://github.com/CozmycDev/PK-BloodShock/releases)
+![Size](https://img.shields.io/github/repo-size/CozmycDev/PK-BloodShock.svg)
+
 # BloodShock Ability for ProjectKorra
 
 This is an addon ability for the [ProjectKorra](https://projectkorra.com/) plugin for Spigot Minecraft servers. Ability concept by [LuxaelNi](https://github.com/LuxaelNivra).
